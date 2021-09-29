@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "Telegram bot"
+version = "0.1.0"
+description = ""
+authors = ["Sergey Pavlov <self@sergeypavlov.dev>"]
+
+[tool.poetry.dependencies]
+python = "3.9.7"
+aiohttp = {version = "*", extras = ["speedups"]}
+
+[tool.poetry.dev-dependencies]
+mypy = "*"
+flake8 = "*"
+
+[tool.poetry-exec-plugin.commands]

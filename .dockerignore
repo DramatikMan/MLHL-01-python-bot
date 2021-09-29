@@ -5,5 +5,9 @@
 .venv
 
 ### ~ Docker ~ ###
-/*.yml
-!/docker-compose.yml
+*.yml
+**/.dockerignore
+**/Dockerfile
+
+### ~ Git ~ ###
+.git*

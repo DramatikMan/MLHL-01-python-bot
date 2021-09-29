@@ -2,12 +2,14 @@
 *.env
 
 ### ~ Python ~ ###
+**/__pycache__
 .venv
 
 ### ~ Docker ~ ###
 *.yml
-**/.dockerignore
-**/Dockerfile
+.dockerignore
+Dockerfile
 
 ### ~ Git ~ ###
 .git*
+LICENSE

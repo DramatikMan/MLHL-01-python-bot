@@ -1,33 +1,49 @@
+import logging
 import os
-import asyncio
-from collections.abc import Iterable
+import sys
 
-from aiohttp import ClientSession
+from requests import Response, get
+from telegram import Update
+from telegram.ext import Updater, CommandHandler
+
+from app.types import Quote, CCT as CallbackContext, DP as Dispatcher
 
 
-quotes = (
-    "Everybody's got a secret, can you tell me what is mine?",
-    "I want to share it all with Mary, results are gonna vary now.",
-    "Give me a reason, cause I've got nothing to gain.",
-    "And if I'm the king of cowards, you're the queen of pain.",
-    "Не ведьма, не кольдунья ко мне явилась в дом."
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    format='[%(levelname)s]:[%(asctime)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
 )
 
-BOT_TOKEN = os.environ['BOT_TOKEN']
-CHAT_ID = os.environ['CHAT_ID']
 
+def random(update: Update, context: CallbackContext) -> None:
+    try:
+        resp: Response = get('https://zenquotes.io/api/random')
+        data: list[Quote] = resp.json()
 
-async def spam_quotes(quotes: Iterable[str]) -> None:
-    async with ClientSession() as http_sess:
-        for quote in quotes:
-            url = f'https://api.telegram.org/bot{BOT_TOKEN}/' \
-                f'sendMessage?chat_id={CHAT_ID}&text="{quote}"'
-            await http_sess.get(url)
-            await asyncio.sleep(5)
+        quote: str = data[0]['q']
+        author: str = data[0]['a']
+
+        context.bot.send_message(
+            chat_id=getattr(update, 'effective_chat').id,
+            text=''.join((quote, '\n', '\n', author))
+        )
+    except Exception as ex:
+        raise ex
+    else:
+        logging.info(f'Sent quote by {author}: {quote}')
 
 
 def main() -> None:
-    asyncio.run(spam_quotes(quotes))
+    updater = Updater(token=os.environ['BOT_TOKEN'], use_context=True)
+    dispatcher: Dispatcher = getattr(updater, 'dispatcher')
+
+    quotes_handler = CommandHandler('random', random)
+    dispatcher.add_handler(quotes_handler)
+
+    updater.start_polling()
+    updater.idle()
 
 
 if __name__ == '__main__':

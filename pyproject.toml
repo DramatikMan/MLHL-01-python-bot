@@ -6,10 +6,12 @@ authors = ["Sergey Pavlov <self@sergeypavlov.dev>"]
 
 [tool.poetry.dependencies]
 python = "3.9.7"
-aiohttp = {version = "*", extras = ["speedups"]}
+requests = "2.26.0"
+python-telegram-bot = "13.7"
 
 [tool.poetry.dev-dependencies]
-mypy = "*"
-flake8 = "*"
+mypy = "0.910"
+flake8 = "3.9.2"
+types-requests = "2.25.9"
 
 [tool.poetry-exec-plugin.commands]

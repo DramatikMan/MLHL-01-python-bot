@@ -2,7 +2,9 @@
 *.env
 
 ### ~ Python ~ ###
+__pycache__
 .venv
+!example.env
 
 ### ~ Docker ~ ###
 /*.yml

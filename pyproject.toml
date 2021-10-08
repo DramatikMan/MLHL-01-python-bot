@@ -5,13 +5,15 @@ description = ""
 authors = ["Sergey Pavlov <self@sergeypavlov.dev>"]
 
 [tool.poetry.dependencies]
-python = "3.9.7"
-requests = "2.26.0"
-python-telegram-bot = "13.7"
+python = "~3.10"
+python-telegram-bot = "*"
+pandas = "*"
 
 [tool.poetry.dev-dependencies]
-mypy = "0.910"
-flake8 = "3.9.2"
-types-requests = "2.25.9"
+jupyter = "*"
+jupyterthemes = "*"
+mypy = "*"
+flake8 = "*"
 
 [tool.poetry-exec-plugin.commands]
+jupyter = "jupyter notebook --allow-root --no-browser --ip 0.0.0.0 --NotebookApp.token=''"

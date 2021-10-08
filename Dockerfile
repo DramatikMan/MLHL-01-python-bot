@@ -1,15 +1,19 @@
-FROM python:3.9.7-slim AS base
+FROM python:3.10-slim AS base
 SHELL ["/bin/bash", "-c"]
 WORKDIR /project
 ENV PYTHONPATH "${PYTHONPATH}:/project"
 COPY pyproject.toml .
 COPY scripts scripts
 COPY app app
+RUN apt update && apt install \
+    build-essential \
+    libffi-dev \
+    -y
 
 FROM base AS development
 CMD rm -rf .venv/* \    
     && bash scripts/poetry_install.sh \
-    && sleep infinity
+    && bash scripts/run_jupyter.sh
 
 FROM base AS production
 COPY poetry.lock .

@@ -1,8 +1,11 @@
+**/data
+
 ### ~ private ~ ###
 *.env
 
 ### ~ Python ~ ###
 **/__pycache__
+**/*.ipynb*
 .venv
 
 ### ~ Docker ~ ###

@@ -10,7 +10,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     username: str = update.message.from_user.first_name
     logging.info(f'User {username} canceled the conversation.')
 
-    context.user_data['filters'] = {}  # type: ignore
+    context.user_data['filters'] = {}
 
     update.message.reply_text(
         "Conversation's over.",

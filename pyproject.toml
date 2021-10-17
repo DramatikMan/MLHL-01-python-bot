@@ -16,3 +16,6 @@ flake8 = "*"
 
 [tool.poetry-exec-plugin.commands]
 jupyter = "jupyter notebook --allow-root --no-browser --ip 0.0.0.0 --NotebookApp.token=''"
+
+[tool.mypy]
+disable_error_code = "index, operator"

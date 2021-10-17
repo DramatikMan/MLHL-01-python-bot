@@ -11,7 +11,7 @@ from telegram.ext import (
 
 from . import cancel
 from ..db import DB_URI
-from ..types import CCT as CallbackContext, DataRecord
+from ..types import CCT, DataRecord
 
 
 CHOOSING, FILTERING, PROMPTING_OUTPUT = range(3)
@@ -24,13 +24,13 @@ with sqlite3.connect(DB_URI) as conn:
     }
 
 
-def handle_query_command(update: Update, context: CallbackContext) -> int:
-    if 'filters' not in context.user_data:  # type: ignore
-        context.user_data['filters'] = {}  # type: ignore
+def handle_query_command(update: Update, context: CCT) -> int:
+    if 'filters' not in context.user_data:
+        context.user_data['filters'] = {}
 
     params: list[str] = [
         key for key in columns.keys()
-        if key not in context.user_data['filters']  # type: ignore
+        if key not in context.user_data['filters']
     ]
 
     descriptions: str = '\n'.join(
@@ -49,9 +49,9 @@ def handle_query_command(update: Update, context: CallbackContext) -> int:
     return CHOOSING
 
 
-def handle_choosing(update: Update, context: CallbackContext) -> int:
+def handle_choosing(update: Update, context: CCT) -> int:
     param: str = update.message.text
-    context.user_data['param'] = param  # type: ignore
+    context.user_data['param'] = param
     update.message.reply_text(
         f'Now enter the target value for parameter: {param}.',
         reply_markup=ForceReply()
@@ -60,15 +60,13 @@ def handle_choosing(update: Update, context: CallbackContext) -> int:
     return FILTERING
 
 
-def handle_filtering(update: Update, context: CallbackContext) -> int:
+def handle_filtering(update: Update, context: CCT) -> int:
     value: str = update.message.text
-    context.user_data['filters'] |= {  # type: ignore
-        context.user_data['param']: value  # type: ignore
-    }
+    context.user_data['filters'] |= {context.user_data['param']: value}
 
     WHERE_SQL = 'WHERE ' + ' AND '.join(
         f'{key} = {value}'
-        for key, value in context.user_data['filters'].items()  # type: ignore
+        for key, value in context.user_data['filters'].items()
     )
 
     with sqlite3.connect(DB_URI) as conn:
@@ -85,7 +83,7 @@ def handle_filtering(update: Update, context: CallbackContext) -> int:
             'No records met the current filtering conditions. '
             'Exiting query mode.'
         )
-        context.user_data['filters'] = {}  # type: ignore
+        context.user_data['filters'] = {}
 
         return ConversationHandler.END
     elif count == 1:
@@ -106,7 +104,7 @@ def handle_filtering(update: Update, context: CallbackContext) -> int:
             f'{single_record}\n\n'
             'Exiting query mode.'
         )
-        context.user_data['filters'] = {}  # type: ignore
+        context.user_data['filters'] = {}
 
         return ConversationHandler.END
     elif count <= 10:
@@ -124,7 +122,7 @@ def handle_filtering(update: Update, context: CallbackContext) -> int:
 
     params: list[str] = [
         key for key in columns.keys()
-        if key not in context.user_data['filters']  # type: ignore
+        if key not in context.user_data['filters']
     ]
 
     descriptions: str = '\n'.join(
@@ -146,16 +144,15 @@ def handle_filtering(update: Update, context: CallbackContext) -> int:
     return CHOOSING
 
 
-def handle_output_prompt(update: Update, context: CallbackContext) -> int:
+def handle_output_prompt(update: Update, context: CCT) -> int:
     value: str = update.message.text
 
     # match value:
     #     case 'output':
     if value == 'output':
         WHERE_SQL = 'WHERE ' + ' AND '.join(
-            f'{key} = {value}'
-            for key, value in
-            context.user_data['filters'].items()  # type: ignore
+            f'{key} = {value}' for key, value
+            in context.user_data['filters'].items()
         )
 
         with sqlite3.connect(DB_URI) as conn:
@@ -174,14 +171,14 @@ def handle_output_prompt(update: Update, context: CallbackContext) -> int:
             f'{multiple_records}\n\n'
             'Exiting query mode.'
         )
-        context.user_data['filters'] = {}  # type: ignore
+        context.user_data['filters'] = {}
 
         return ConversationHandler.END
         # case 'continue':
     elif value == 'continue':
         params: list[str] = [
             key for key in columns.keys()
-            if key not in context.user_data['filters']  # type: ignore
+            if key not in context.user_data['filters']
         ]
 
         descriptions: str = '\n'.join(

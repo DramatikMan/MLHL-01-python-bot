@@ -6,9 +6,10 @@ import sys
 from telegram import Update
 from telegram.ext import Updater, CommandHandler
 
+from app.conversations.insert import InsertHandler
 from app.conversations.query import query_handler
 from app.db import DB_URI
-from app.types import CCT as CallbackContext, DP as Dispatcher
+from app.types import CCT, DP
 
 
 logging.basicConfig(
@@ -28,7 +29,7 @@ commands = dict(
 )
 
 
-def print_help(update: Update, context: CallbackContext) -> None:
+def print_help(update: Update, context: CCT) -> None:
     help_text = 'The following commands are available: \n'
 
     for key in commands:
@@ -38,7 +39,7 @@ def print_help(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(help_text)
 
 
-def reset_database(update: Update, context: CallbackContext) -> None:
+def reset_database(update: Update, context: CCT) -> None:
     with sqlite3.connect(DB_URI) as conn:
         conn.cursor().execute('DROP TABLE data')
         conn.cursor().execute('CREATE TABLE data AS SELECT * FROM original')
@@ -48,7 +49,7 @@ def reset_database(update: Update, context: CallbackContext) -> None:
 
 def main() -> None:
     updater = Updater(token=os.environ['BOT_TOKEN'], use_context=True)
-    dispatcher: Dispatcher = getattr(updater, 'dispatcher')
+    dispatcher: DP = getattr(updater, 'dispatcher')
 
     help_handler = CommandHandler('help', print_help)
     reset_DB_handler = CommandHandler('reset', reset_database)
@@ -58,6 +59,7 @@ def main() -> None:
     dispatcher.add_handler(reset_DB_handler)
 
     # conversations
+    dispatcher.add_handler(InsertHandler())
     dispatcher.add_handler(query_handler)
 
     updater.start_polling()

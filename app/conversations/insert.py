@@ -106,18 +106,19 @@ class InsertHandler(BaseHandler):
     def handle_prompting_retry(self, update: Update, context: CCT) -> int:
         answer: str = update.message.text
 
-        if answer == 'YES':
-            context.user_data['insert'] = {}
+        match answer:
+            case 'YES':
+                context.user_data['insert'] = {}
 
-            update.message.reply_text(
-                'Enter the price value for the new record:',
-                reply_markup=ForceReply()
-            )
+                update.message.reply_text(
+                    'Enter the price value for the new record:',
+                    reply_markup=ForceReply()
+                )
 
-            return self.ENTERING_PRICE
-        elif answer == 'NO':
-            update.message.reply_text('Exiting insert mode.')
+                return self.ENTERING_PRICE
+            case 'NO':
+                update.message.reply_text('Exiting insert mode.')
 
-            return self.END
+                return self.END
 
         return self.END

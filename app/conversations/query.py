@@ -2,19 +2,14 @@ import sqlite3
 from collections.abc import Iterable
 
 from telegram import Update, ReplyKeyboardMarkup, ForceReply
-from telegram.ext import (
-    CommandHandler,
-    MessageHandler,
-    Filters,
-    ConversationHandler
-)
+from telegram.ext import CommandHandler, MessageHandler, Filters
 
-from . import cancel
+from . import BaseHandler
 from ..db import DB_URI
 from ..types import CCT, DataRecord
 
 
-class QueryHandler(ConversationHandler[CCT]):
+class QueryHandler(BaseHandler):
     CHOOSING, FILTERING, PROMPTING_OUTPUT = range(3)
 
     def __init__(self) -> None:
@@ -40,7 +35,7 @@ class QueryHandler(ConversationHandler[CCT]):
                     self.handle_output_prompt
                 )]
             },
-            fallbacks=[CommandHandler('cancel', cancel)],
+            fallbacks=[CommandHandler('cancel', self.cancel)],
         )
 
     def handle_query_command(self, update: Update, context: CCT) -> int:
@@ -102,7 +97,7 @@ class QueryHandler(ConversationHandler[CCT]):
             )
             context.user_data['filters'] = {}
 
-            return ConversationHandler.END
+            return self.END
         elif count == 1:
             with sqlite3.connect(DB_URI) as conn:
                 result: DataRecord = conn.cursor().execute(f'''
@@ -123,7 +118,7 @@ class QueryHandler(ConversationHandler[CCT]):
             )
             context.user_data['filters'] = {}
 
-            return ConversationHandler.END
+            return self.END
         elif count <= 10:
             update.message.reply_text(
                 f'Average price = {avg_price:.2f}.\n\n'
@@ -190,7 +185,7 @@ class QueryHandler(ConversationHandler[CCT]):
             )
             context.user_data['filters'] = {}
 
-            return ConversationHandler.END
+            return self.END
             # case 'continue':
         elif value == 'continue':
             params: list[str] = [

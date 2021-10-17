@@ -2,19 +2,14 @@ import logging
 import sqlite3
 
 from telegram import Update, ReplyKeyboardMarkup, ForceReply
-from telegram.ext import (
-    CommandHandler,
-    MessageHandler,
-    Filters,
-    ConversationHandler
-)
+from telegram.ext import CommandHandler, MessageHandler, Filters
 
-from . import cancel
+from . import BaseHandler
 from ..db import DB_URI
 from ..types import CCT
 
 
-class InsertHandler(ConversationHandler[CCT]):
+class InsertHandler(BaseHandler):
     ENTERING_PRICE, ENTERING_OTHERS, PROMPTING_RETRY = range(3)
 
     def __init__(self) -> None:
@@ -37,7 +32,7 @@ class InsertHandler(ConversationHandler[CCT]):
                     self.handle_prompting_retry
                 )]
             },
-            fallbacks=[CommandHandler('cancel', cancel)],
+            fallbacks=[CommandHandler('cancel', self.cancel)],
         )
 
     @property

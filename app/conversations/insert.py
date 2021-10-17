@@ -5,6 +5,7 @@ from telegram import Update, ReplyKeyboardMarkup, ForceReply
 from telegram.ext import CommandHandler, MessageHandler, Filters
 
 from . import BaseHandler
+from .utils import get_columns_meta
 from ..db import DB_URI
 from ..types import CCT
 
@@ -13,6 +14,8 @@ class InsertHandler(BaseHandler):
     ENTERING_PRICE, ENTERING_OTHERS, PROMPTING_RETRY = range(3)
 
     def __init__(self) -> None:
+        self.columns: dict[str, str] = get_columns_meta()
+
         super().__init__(
             entry_points=[CommandHandler(
                 'insert',
@@ -34,14 +37,6 @@ class InsertHandler(BaseHandler):
             },
             fallbacks=[CommandHandler('cancel', self.cancel)],
         )
-
-    @property
-    def columns(self) -> dict[str, str]:
-        with sqlite3.connect(DB_URI) as conn:
-            return {
-                row[0]: row[1]
-                for row in conn.cursor().execute('SELECT * FROM meta')
-            }
 
     def handle_insert_command(self, update: Update, context: CCT) -> int:
         context.user_data['insert'] = {}

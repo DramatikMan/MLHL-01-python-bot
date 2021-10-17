@@ -5,6 +5,7 @@ from telegram import Update, ReplyKeyboardMarkup, ForceReply
 from telegram.ext import CommandHandler, MessageHandler, Filters
 
 from . import BaseHandler
+from .utils import get_columns_meta
 from ..db import DB_URI
 from ..types import CCT, DataRecord
 
@@ -13,11 +14,7 @@ class QueryHandler(BaseHandler):
     CHOOSING, FILTERING, PROMPTING_OUTPUT = range(3)
 
     def __init__(self) -> None:
-        with sqlite3.connect(DB_URI) as conn:
-            self.columns = {
-                row[0]: row[1]
-                for row in conn.cursor().execute('SELECT * FROM meta')
-            }
+        self.columns: dict[str, str] = get_columns_meta()
 
         super().__init__(
             entry_points=[CommandHandler('query', self.handle_query_command)],

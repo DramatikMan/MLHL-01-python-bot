@@ -7,7 +7,6 @@ authors = ["Sergey Pavlov <self@sergeypavlov.dev>"]
 [tool.poetry.dependencies]
 python = "~3.10"
 python-telegram-bot = "*"
-pandas = "*"
 
 [tool.poetry.dev-dependencies]
 jupyter = "*"

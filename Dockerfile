@@ -5,10 +5,7 @@ ENV PYTHONPATH "${PYTHONPATH}:/project"
 COPY pyproject.toml .
 COPY scripts scripts
 COPY app app
-RUN apt update && apt install \
-    build-essential \
-    libffi-dev \
-    -y
+RUN apt update && apt install build-essential -y
 
 FROM base AS development
 CMD rm -rf .venv/* \    

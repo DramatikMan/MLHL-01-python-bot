@@ -79,9 +79,9 @@ class InsertHandler(BaseHandler):
                 INSERT INTO data ({
                     ', '.join(context.user_data['insert'].keys())
                 })
-                VALUES ({
-                    ', '.join(context.user_data['insert'].values())
-                })
+                VALUES ('{
+                    "', '".join(context.user_data['insert'].values())
+                }')
             '''
             logging.info(SQL.lstrip())
 

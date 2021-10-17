@@ -7,7 +7,7 @@ from telegram import Update
 from telegram.ext import Updater, CommandHandler
 
 from app.conversations.insert import InsertHandler
-from app.conversations.query import query_handler
+from app.conversations.query import QueryHandler
 from app.db import DB_URI
 from app.types import CCT, DP
 
@@ -60,7 +60,7 @@ def main() -> None:
 
     # conversations
     dispatcher.add_handler(InsertHandler())
-    dispatcher.add_handler(query_handler)
+    dispatcher.add_handler(QueryHandler())
 
     updater.start_polling()
     updater.idle()

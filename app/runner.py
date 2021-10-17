@@ -1,18 +1,13 @@
 import logging
 import os
+import sqlite3
 import sys
-from typing import Any
 
-import pandas as pd
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import (
-    Updater,
-    CommandHandler,
-    MessageHandler,
-    Filters,
-    ConversationHandler
-)
+from telegram import Update
+from telegram.ext import Updater, CommandHandler
 
+from app.conversations.query import query_handler
+from app.db import DB_URI
 from app.types import CCT as CallbackContext, DP as Dispatcher
 
 
@@ -24,83 +19,46 @@ logging.basicConfig(
 )
 
 
-df: pd.DataFrame = pd.read_csv(f'{os.environ["PWD"]}/app/data/db.csv')
-params: list[str] = [*df.columns]
+commands = dict(
+    help='Gives you information about the available commands',
+    query='Enter query mode (average price lookup with filtering)',
+    insert='Enter insert mode (adding records to the database)',
+    reset='Reset the database to its original state',
+    cancel='Quit current conversation mode'
+)
 
 
-def query(update: Update, context: CallbackContext) -> int:
-    reply_keyboard: list[list[str]] = [params]
-    update.message.reply_text(
-        'We are in query mode. Enter parameter name to filter deals by:\n',
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard,
-            one_time_keyboard=True
-        )
-    )
+def print_help(update: Update, context: CallbackContext) -> None:
+    help_text = 'The following commands are available: \n'
 
-    return 0
+    for key in commands:
+        help_text += '/' + key + ': '
+        help_text += commands[key] + '\n'
+
+    update.message.reply_text(help_text)
 
 
-def request_value(update: Update, context: CallbackContext) -> int:
-    param_name: str = update.message.text
-    context.update({'param_name': param_name})
-    update.message.reply_text(
-        f'Now enter the target value for {param_name}.',
-        reply_markup=ReplyKeyboardRemove()
-    )
+def reset_database(update: Update, context: CallbackContext) -> None:
+    with sqlite3.connect(DB_URI) as conn:
+        conn.cursor().execute('DROP TABLE data')
+        conn.cursor().execute('CREATE TABLE data AS SELECT * FROM original')
 
-    return 1
+    update.message.reply_text('The database was reset to its original state.')
 
 
-def return_average(update: Update, context: CallbackContext) -> int:
-    value: Any = update.message.text
-    update.message.reply_text(f'{value}')
-
-    return 2
-
-
-# def add_record(update: Update, context: CallbackContext) -> int:
-#     ConversationHandler.END
-
-
-def cancel(update: Update, context: CallbackContext) -> int:
-    username: str = update.message.from_user.first_name
-    logging.info(f'User {username} canceled the conversation.')
-    update.message.reply_text(
-        "Conversation's over.",
-        reply_markup=ReplyKeyboardRemove()
-    )
-
-    return ConversationHandler.END
-
-0
 def main() -> None:
     updater = Updater(token=os.environ['BOT_TOKEN'], use_context=True)
     dispatcher: Dispatcher = getattr(updater, 'dispatcher')
 
-    conv_handler = ConversationHandler(
-        entry_points=[
-            CommandHandler('query', query),
-            # CommandHandler('add', add_record)
-        ],
-        states={
-            0: [MessageHandler(
-                Filters.regex(f'^({"|".join(params)})$'),
-                request_value
-            )],
-            1: [MessageHandler(
-                Filters.text & ~Filters.command,
-                return_average
-            )],
-            2: [MessageHandler(
-                Filters.regex(f'^({"|".join(params)})$'),
-                request_value
-            )],
-        },
-        fallbacks=[CommandHandler('cancel', cancel)],
-    )
+    help_handler = CommandHandler('help', print_help)
+    reset_DB_handler = CommandHandler('reset', reset_database)
 
-    dispatcher.add_handler(conv_handler)
+    # generic commands
+    dispatcher.add_handler(help_handler)
+    dispatcher.add_handler(reset_DB_handler)
+
+    # conversations
+    dispatcher.add_handler(query_handler)
 
     updater.start_polling()
     updater.idle()

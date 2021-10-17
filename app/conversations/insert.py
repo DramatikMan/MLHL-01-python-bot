@@ -74,14 +74,17 @@ class InsertHandler(ConversationHandler[CCT]):
         return self.ENTERING_OTHERS
 
     def handle_entering_others(self, update: Update, context: CCT) -> int:
-        string: str = update.message.text
-
-        context.user_data['insert'] |= {
-            key: value for key, value
-            in zip(self.columns.keys(), string.split(','))
-        }
+        values: list[str] = update.message.text.split(',')
 
         try:
+            if len(values) != len(self.columns.keys()):
+                raise ValueError('Wrong number of values.')
+
+            context.user_data['insert'] |= {
+                key: value for key, value
+                in zip(self.columns.keys(), values)
+            }
+
             SQL = f'''
                 INSERT INTO data ({
                     ', '.join(context.user_data['insert'].keys())

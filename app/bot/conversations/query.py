@@ -54,7 +54,7 @@ class QueryHandler(BaseHandler):
             'We are in query mode. Choose parameter to filter deals by:\n\n'
             f'{descriptions}',
             reply_markup=ReplyKeyboardMarkup(
-                [[name] for name in params],
+                [params[i:i + 3] for i in range(0, len(params), 3)],
                 one_time_keyboard=True
             )
         )
@@ -127,7 +127,7 @@ class QueryHandler(BaseHandler):
                 'Would you like to output these records '
                 'or to continue filtering?',
                 reply_markup=ReplyKeyboardMarkup(
-                    [['output'], ['continue']],
+                    [['output', 'continue']],
                     one_time_keyboard=True
                 )
             )
@@ -150,7 +150,7 @@ class QueryHandler(BaseHandler):
             'or type /cancel to quit query mode.\n\n'
             f'{descriptions}',
             reply_markup=ReplyKeyboardMarkup(
-                [[name] for name in params],
+                [params[i:i + 3] for i in range(0, len(params), 3)],
                 one_time_keyboard=True
             )
         )
@@ -204,7 +204,7 @@ class QueryHandler(BaseHandler):
                 'selection or type /cancel to quit query mode.\n\n'
                 f'{descriptions}',
                 reply_markup=ReplyKeyboardMarkup(
-                    [[name] for name in params],
+                    [params[i:i + 3] for i in range(0, len(params), 3)],
                     one_time_keyboard=True
                 )
             )

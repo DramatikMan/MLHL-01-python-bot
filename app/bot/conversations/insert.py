@@ -1,12 +1,17 @@
 import logging
 import sqlite3
 
-from telegram import Update, ReplyKeyboardMarkup, ForceReply
+from telegram import (
+    Update,
+    ReplyKeyboardMarkup,
+    ForceReply,
+    ReplyKeyboardRemove
+)
 from telegram.ext import CommandHandler, MessageHandler, Filters
 
+from app.db import DB_URI
+from app.db.utils import get_columns_meta
 from . import BaseHandler
-from .utils import get_columns_meta
-from ..db import DB_URI
 from ..types import CCT
 
 
@@ -106,19 +111,24 @@ class InsertHandler(BaseHandler):
     def handle_prompting_retry(self, update: Update, context: CCT) -> int:
         answer: str = update.message.text
 
-        match answer:
-            case 'YES':
-                context.user_data['insert'] = {}
+        # match answer:
+        #     case 'YES':
+        if answer == 'YES':
+            context.user_data['insert'] = {}
 
-                update.message.reply_text(
-                    'Enter the price value for the new record:',
-                    reply_markup=ForceReply()
-                )
+            update.message.reply_text(
+                'Enter the price value for the new record:',
+                reply_markup=ForceReply()
+            )
 
-                return self.ENTERING_PRICE
-            case 'NO':
-                update.message.reply_text('Exiting insert mode.')
+            return self.ENTERING_PRICE
+            # case 'NO':
+        elif answer == 'NO':
+            update.message.reply_text(
+                'Exiting insert mode.',
+                reply_markup=ReplyKeyboardRemove()
+            )
 
-                return self.END
+            return self.END
 
         return self.END

@@ -1,6 +1,6 @@
 import sqlite3
 
-from ...db import DB_URI
+from . import DB_URI
 
 
 def get_columns_meta() -> dict[str, str]:

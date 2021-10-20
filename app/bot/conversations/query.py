@@ -1,12 +1,17 @@
 import sqlite3
 from collections.abc import Iterable
 
-from telegram import Update, ReplyKeyboardMarkup, ForceReply
+from telegram import (
+    Update,
+    ReplyKeyboardMarkup,
+    ForceReply,
+    ReplyKeyboardRemove
+)
 from telegram.ext import CommandHandler, MessageHandler, Filters
 
+from app.db import DB_URI
+from app.db.utils import get_columns_meta
 from . import BaseHandler
-from .utils import get_columns_meta
-from ..db import DB_URI
 from ..types import CCT, DataRecord
 
 
@@ -90,7 +95,8 @@ class QueryHandler(BaseHandler):
         if count == 0:
             update.message.reply_text(
                 'No records met the current filtering conditions. '
-                'Exiting query mode.'
+                'Exiting query mode.',
+                reply_markup=ReplyKeyboardRemove()
             )
             context.user_data['filters'] = {}
 
@@ -111,7 +117,8 @@ class QueryHandler(BaseHandler):
             update.message.reply_text(
                 'Found a single matching record.\n\n'
                 f'{single_record}\n\n'
-                'Exiting query mode.'
+                'Exiting query mode.',
+                reply_markup=ReplyKeyboardRemove()
             )
             context.user_data['filters'] = {}
 
@@ -156,52 +163,55 @@ class QueryHandler(BaseHandler):
     def handle_output_prompt(self, update: Update, context: CCT) -> int:
         value: str = update.message.text
 
-        match value:
-            case 'output':
-                WHERE_SQL = 'WHERE ' + ' AND '.join(
-                    f'{key} = {value}' for key, value
-                    in context.user_data['filters'].items()
+        # match value:
+        #     case 'output':
+        if value == 'output':
+            WHERE_SQL = 'WHERE ' + ' AND '.join(
+                f'{key} = {value}' for key, value
+                in context.user_data['filters'].items()
+            )
+
+            with sqlite3.connect(DB_URI) as conn:
+                result: Iterable[DataRecord] = conn.cursor().execute(f'''
+                    SELECT *
+                    FROM data
+                    {WHERE_SQL}
+                ''')
+
+            multiple_records: str = '\n'.join((
+                f'{i}: {value}'
+                for i, value in enumerate(result, 1)
+            ))
+
+            update.message.reply_text(
+                f'{multiple_records}\n\n'
+                'Exiting query mode.',
+                reply_markup=ReplyKeyboardRemove()
+            )
+            context.user_data['filters'] = {}
+
+            return self.END
+            # case 'continue':
+        elif value == 'continue':
+            params: list[str] = [
+                key for key in self.columns.keys()
+                if key not in context.user_data['filters']
+            ]
+
+            descriptions: str = '\n'.join(
+                f'{name} << {self.columns[name]}' for name in params
+            )
+
+            update.message.reply_text(
+                'Choose another parameter to narrow down the current '
+                'selection or type /cancel to quit query mode.\n\n'
+                f'{descriptions}',
+                reply_markup=ReplyKeyboardMarkup(
+                    [[name] for name in params],
+                    one_time_keyboard=True
                 )
+            )
 
-                with sqlite3.connect(DB_URI) as conn:
-                    result: Iterable[DataRecord] = conn.cursor().execute(f'''
-                        SELECT *
-                        FROM data
-                        {WHERE_SQL}
-                    ''')
-
-                multiple_records: str = '\n'.join((
-                    f'{i}: {value}'
-                    for i, value in enumerate(result, 1)
-                ))
-
-                update.message.reply_text(
-                    f'{multiple_records}\n\n'
-                    'Exiting query mode.'
-                )
-                context.user_data['filters'] = {}
-
-                return self.END
-            case 'continue':
-                params: list[str] = [
-                    key for key in self.columns.keys()
-                    if key not in context.user_data['filters']
-                ]
-
-                descriptions: str = '\n'.join(
-                    f'{name} << {self.columns[name]}' for name in params
-                )
-
-                update.message.reply_text(
-                    'Choose another parameter to narrow down the current '
-                    'selection or type /cancel to quit query mode.\n\n'
-                    f'{descriptions}',
-                    reply_markup=ReplyKeyboardMarkup(
-                        [[name] for name in params],
-                        one_time_keyboard=True
-                    )
-                )
-
-                return self.CHOOSING
+            return self.CHOOSING
 
         return self.END

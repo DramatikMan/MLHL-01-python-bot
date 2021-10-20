@@ -10,7 +10,6 @@ from telegram import (
 from telegram.ext import CommandHandler, MessageHandler, Filters
 
 from app.db import DB_URI
-from app.db.utils import get_columns_meta
 from . import BaseHandler
 from ..types import CCT, DataRecord
 
@@ -19,8 +18,6 @@ class QueryHandler(BaseHandler):
     CHOOSING, FILTERING, PROMPTING_OUTPUT = range(3)
 
     def __init__(self) -> None:
-        self.columns: dict[str, str] = get_columns_meta()
-
         super().__init__(
             entry_points=[CommandHandler('query', self.handle_query_command)],
             states={

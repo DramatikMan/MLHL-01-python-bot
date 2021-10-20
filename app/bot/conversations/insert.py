@@ -10,7 +10,6 @@ from telegram import (
 from telegram.ext import CommandHandler, MessageHandler, Filters
 
 from app.db import DB_URI
-from app.db.utils import get_columns_meta
 from . import BaseHandler
 from ..types import CCT
 
@@ -19,8 +18,6 @@ class InsertHandler(BaseHandler):
     ENTERING_PRICE, ENTERING_OTHERS, PROMPTING_RETRY = range(3)
 
     def __init__(self) -> None:
-        self.columns: dict[str, str] = get_columns_meta()
-
         super().__init__(
             entry_points=[CommandHandler(
                 'insert',

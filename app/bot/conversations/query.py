@@ -160,8 +160,6 @@ class QueryHandler(BaseHandler):
     def handle_output_prompt(self, update: Update, context: CCT) -> int:
         value: str = update.message.text
 
-        # match value:
-        #     case 'output':
         if value == 'output':
             WHERE_SQL = 'WHERE ' + ' AND '.join(
                 f'{key} = {value}' for key, value
@@ -188,7 +186,6 @@ class QueryHandler(BaseHandler):
             context.user_data['filters'] = {}
 
             return self.END
-            # case 'continue':
         elif value == 'continue':
             params: list[str] = [
                 key for key in self.columns.keys()

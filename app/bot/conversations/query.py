@@ -4,6 +4,7 @@ from io import BytesIO
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.linear_model import LinearRegression
 from telegram import (
     Update,
     ReplyKeyboardMarkup,
@@ -19,7 +20,7 @@ from ..types import CCT, DataRecord
 
 
 class QueryHandler(BaseHandler):
-    CHOOSING, FILTERING, PROMPTING_OUTPUT = range(3)
+    CHOOSING, FILTERING, PROMPTING_OUTPUT, PROMPTING_PREDICTION = range(4)
 
     def __init__(self) -> None:
         super().__init__(
@@ -39,6 +40,10 @@ class QueryHandler(BaseHandler):
                 self.PROMPTING_OUTPUT: [MessageHandler(
                     Filters.regex('^(output|continue)$'),
                     self.handle_output_prompt
+                )],
+                self.PROMPTING_PREDICTION: [MessageHandler(
+                    Filters.regex('^(YES|NO)$'),
+                    self.handle_prediction_prompt
                 )]
             },
             fallbacks=[CommandHandler('cancel', self.cancel)],
@@ -98,13 +103,16 @@ class QueryHandler(BaseHandler):
 
         if count == 0:
             update.message.reply_text(
-                'No records met the current filtering conditions. '
-                'Exiting query mode.',
-                reply_markup=ReplyKeyboardRemove()
+                'No records met the current filtering conditions.\n\n'
+                'Would you like to get a modeled prediction of the price '
+                'for the current filter (excluding NaN variables)?',
+                reply_markup=ReplyKeyboardMarkup(
+                    [['YES', 'NO']],
+                    one_time_keyboard=True
+                )
             )
-            context.user_data['filters'] = {}
 
-            return self.END
+            return self.PROMPTING_PREDICTION
         elif count == 1:
             with sqlite3.connect(DB_URI) as conn:
                 result: DataRecord = conn.cursor().execute(f'''
@@ -262,6 +270,50 @@ class QueryHandler(BaseHandler):
 
         images: list[InputMediaPhoto] = self.get_chart_images(context)
         update.message.reply_media_group(media=images)  # type: ignore
+        context.user_data['filters'] = {}
+
+        return self.END
+
+    def get_prediction(self, context: CCT) -> float:
+        params = {
+            key: value for key, value in context.user_data['filters']
+            if key not in ('product_type', 'sub_area')
+        }
+
+        with sqlite3.connect(DB_URI) as conn:
+            df: pd.DataFrame = pd.read_sql_query(
+                sql=f'''
+                    SELECT {', '.join(params)}, price_doc
+                    FROM data
+                ''',
+                con=conn
+            )
+
+        model = LinearRegression()
+        model.fit(X=df[[*params]], y=df['price_doc'] / (10 ** 6))
+
+        return float(
+            model.coef_ @ [*map(float, params.values())] + model.intercept_
+        )
+
+    def handle_prediction_prompt(self, update: Update, context: CCT) -> int:
+        value: str = update.message.text
+
+        if value == 'NO':
+            update.message.reply_text(
+                'Exiting query mode.',
+                reply_markup=ReplyKeyboardRemove()
+            )
+
+            return self.END
+        elif value == 'YES':
+            prediction: float = self.get_prediction(context)
+
+            update.message.reply_text(
+                f'Predicted price = {prediction:.6f} M'
+                '\n\nExiting query mode.'
+            )
+
         context.user_data['filters'] = {}
 
         return self.END

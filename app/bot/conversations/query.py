@@ -37,18 +37,23 @@ class QueryHandler(BaseHandler):
             fallbacks=[CommandHandler('cancel', self.cancel)],
         )
 
-    def handle_query_command(self, update: Update, context: CCT) -> int:
-        if 'filters' not in context.user_data:
-            context.user_data['filters'] = {}
-
-        params: list[str] = [
+    def get_not_yet_chosen_params(self, context: CCT) -> list[str]:
+        return [
             key for key in self.columns.keys()
             if key not in context.user_data['filters']
         ]
 
-        descriptions: str = '\n'.join(
+    def get_descriptions_string(self, params: list[str]) -> str:
+        return '\n'.join(
             f'{name} << {self.columns[name]}' for name in params
         )
+
+    def handle_query_command(self, update: Update, context: CCT) -> int:
+        if 'filters' not in context.user_data:
+            context.user_data['filters'] = {}
+
+        params: list[str] = self.get_not_yet_chosen_params(context)
+        descriptions: str = self.get_descriptions_string(params)
 
         update.message.reply_text(
             'We are in query mode. Choose parameter to filter deals by:\n\n'
@@ -134,14 +139,8 @@ class QueryHandler(BaseHandler):
 
             return self.PROMPTING_OUTPUT
 
-        params: list[str] = [
-            key for key in self.columns.keys()
-            if key not in context.user_data['filters']
-        ]
-
-        descriptions: str = '\n'.join(
-            f'{name} << {self.columns[name]}' for name in params
-        )
+        params: list[str] = self.get_not_yet_chosen_params(context)
+        descriptions: str = self.get_descriptions_string(params)
 
         update.message.reply_text(
             f'Average price = {avg_price:.2f}.\n\n'
@@ -187,14 +186,8 @@ class QueryHandler(BaseHandler):
 
             return self.END
         elif value == 'continue':
-            params: list[str] = [
-                key for key in self.columns.keys()
-                if key not in context.user_data['filters']
-            ]
-
-            descriptions: str = '\n'.join(
-                f'{name} << {self.columns[name]}' for name in params
-            )
+            params: list[str] = self.get_not_yet_chosen_params(context)
+            descriptions: str = self.get_descriptions_string(params)
 
             update.message.reply_text(
                 'Choose another parameter to narrow down the current '

@@ -217,6 +217,7 @@ class QueryHandler(BaseHandler):
 
     def get_chart_images(self, context: CCT) -> list[InputMediaPhoto]:
         params: list[str] = self.get_not_yet_filtered_params(context)
+        VARS_SQL = ', '.join(params)
         WHERE_SQL = 'WHERE ' + ' AND '.join(
             f'{key} = {value}'
             for key, value in context.user_data['filters'].items()
@@ -224,7 +225,7 @@ class QueryHandler(BaseHandler):
 
         with sqlite3.connect(DB_URI) as conn:
             df: pd.DataFrame = pd.read_sql_query(
-                sql=f'SELECT * FROM data {WHERE_SQL}',
+                sql=f'SELECT {VARS_SQL}, price_doc FROM data {WHERE_SQL}',
                 con=conn
             )
 

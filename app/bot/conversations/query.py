@@ -5,6 +5,7 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 from telegram import (
     Update,
     ReplyKeyboardMarkup,
@@ -274,9 +275,9 @@ class QueryHandler(BaseHandler):
 
         return self.END
 
-    def get_prediction(self, context: CCT) -> float:
+    def get_prediction(self, context: CCT) -> tuple[float, float]:
         params = {
-            key: value for key, value in context.user_data['filters']
+            key: value for key, value in context.user_data['filters'].items()
             if key not in ('product_type', 'sub_area')
         }
 
@@ -289,11 +290,24 @@ class QueryHandler(BaseHandler):
                 con=conn
             )
 
-        model = LinearRegression()
-        model.fit(X=df[[*params]], y=df['price_doc'] / (10 ** 6))
+        X = df[[*params]]
+        y = df['price_doc'] / (10 ** 6)
 
-        return float(
-            model.coef_ @ [*map(float, params.values())] + model.intercept_
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=0.33,
+            random_state=42
+        )
+
+        model = LinearRegression()
+        model.fit(X=X_train, y=y_train)
+
+        return (
+            float(model.score(X=X_test, y=y_test)),
+            float(
+                model.coef_ @ [*map(float, params.values())] + model.intercept_
+            )
         )
 
     def handle_prediction_prompt(self, update: Update, context: CCT) -> int:
@@ -307,10 +321,12 @@ class QueryHandler(BaseHandler):
 
             return self.END
         elif value == 'YES':
-            prediction: float = self.get_prediction(context)
+            R_squared, prediction = self.get_prediction(context)
 
             update.message.reply_text(
-                f'Predicted price = {prediction:.6f} M'
+                f'Predicted price = {prediction:.6f} M.'
+                '\n'
+                f'R-squared for test subset = {R_squared:.2f}.'
                 '\n\nExiting query mode.'
             )
 

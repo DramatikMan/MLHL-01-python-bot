@@ -243,8 +243,8 @@ class QueryHandler(BaseHandler):
             if param not in ('product_type', 'sub_area')
         ):
             plt.clf()
-            plt.xlabel(param)
-            plt.ylabel('price_doc')
+            plt.xlabel(self.columns[param])
+            plt.ylabel('sale price')
             plt.hexbin(
                 x=df[param],
                 y=df['price_doc'].apply(lambda x: x / (10 ** 6)),

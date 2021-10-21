@@ -40,21 +40,25 @@ class InsertHandler(BaseHandler):
             fallbacks=[CommandHandler('cancel', self.cancel)],
         )
 
-    def handle_insert_command(self, update: Update, context: CCT) -> int:
-        context.user_data['insert'] = {}
-
+    def initial_reply(self, update: Update) -> None:
         update.message.reply_text(
             'We are in insert mode. '
             'Enter the price value for the new record:',
             reply_markup=ForceReply()
         )
 
+    def handle_insert_command(self, update: Update, context: CCT) -> int:
+        context.user_data['insert'] = {}
+        self.initial_reply(update)
+
         return self.ENTERING_PRICE
 
     def handle_entering_price(self, update: Update, context: CCT) -> int:
         context.user_data['insert']['price_doc'] = update.message.text
 
-        variable_list: str = '\n'.join([*self.columns.keys()][:-1])
+        variable_list: str = self.get_descriptions_string(
+            [*self.columns.keys()]
+        )
 
         update.message.reply_text(
             'Now enter the rest of the values, separated by comma. '
@@ -110,11 +114,7 @@ class InsertHandler(BaseHandler):
 
         if answer == 'YES':
             context.user_data['insert'] = {}
-
-            update.message.reply_text(
-                'Enter the price value for the new record:',
-                reply_markup=ForceReply()
-            )
+            self.initial_reply(update)
 
             return self.ENTERING_PRICE
         elif answer == 'NO':

@@ -29,3 +29,8 @@ class BaseHandler(ConversationHandler[CCT]):
         )
 
         return self.END
+
+    def get_descriptions_string(self, params: list[str]) -> str:
+        return '\n'.join(
+            f'{name} << {self.columns[name]}' for name in params
+        )

@@ -50,11 +50,6 @@ class QueryHandler(BaseHandler):
             if key not in context.user_data['filters']
         ]
 
-    def get_descriptions_string(self, params: list[str]) -> str:
-        return '\n'.join(
-            f'{name} << {self.columns[name]}' for name in params
-        )
-
     def handle_query_command(self, update: Update, context: CCT) -> int:
         if 'filters' not in context.user_data:
             context.user_data['filters'] = {}

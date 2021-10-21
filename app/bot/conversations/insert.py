@@ -111,9 +111,9 @@ class InsertHandler(BaseHandler):
 
     def handle_prompting_retry(self, update: Update, context: CCT) -> int:
         answer: str = update.message.text
+        context.user_data['insert'] = {}
 
         if answer == 'YES':
-            context.user_data['insert'] = {}
             self.initial_reply(update)
 
             return self.ENTERING_PRICE

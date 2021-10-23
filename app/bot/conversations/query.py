@@ -160,7 +160,8 @@ class QueryHandler(BaseHandler):
             'or type /cancel to quit query mode.\n\n'
             + (
                 'You can also type /charts to get visualization of how the '
-                'price depends on each of the not yet filtered parameters.\n\n'
+                'price depends on each of the not yet filtered parameters '
+                '(excluding NaNs).\n\n'
                 if count <= 1000 else ''
             )
             + f'{descriptions}',

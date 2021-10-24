@@ -6,6 +6,7 @@ from telegram.ext import Updater, CommandHandler
 
 from app.db import DB_URI
 from .conversations.insert import InsertHandler
+from .conversations.predict import PredictHandler
 from .conversations.query import QueryHandler
 from .types import CCT, DP
 
@@ -15,6 +16,7 @@ class Bot:
         help='Gives you information about the available commands',
         query='Enter query mode (average price lookup with filtering)',
         insert='Enter insert mode (adding records to the database)',
+        predict='Enter prediction mode',
         reset='Reset the database to its original state',
         cancel='Quit current conversation mode'
     )
@@ -53,6 +55,7 @@ class Bot:
 
         # conversations
         self.dispatcher.add_handler(InsertHandler())
+        self.dispatcher.add_handler(PredictHandler())
         self.dispatcher.add_handler(QueryHandler())
 
     def run(self) -> None:

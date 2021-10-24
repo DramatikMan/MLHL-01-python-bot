@@ -9,7 +9,7 @@ from ..types import CCT
 
 
 class BaseHandler(ConversationHandler[CCT]):
-    __slots__ = 'columns'
+    __slots__ = ('columns',)
     columns: dict[str, str]
 
     def __new__(cls) -> 'BaseHandler':

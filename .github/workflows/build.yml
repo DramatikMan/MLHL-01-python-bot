@@ -14,10 +14,10 @@ jobs:
 
     steps:
 
-      - name: Get current latest image id
+      - name: Get current latest image ID
         run: >
           python -c
-          "import requests, json;
+          "import requests;
           url = 'https://api.github.com/user/packages/container/${{ github.event.repository.name }}/versions';
           headers = dict(
               Authorization='token ${{ secrets.GHCR_PAT }}',
@@ -51,7 +51,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           build-args:
-            -build_env=production
+            - build_env=production
           context: .
           target: production
           push: true

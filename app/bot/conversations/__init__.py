@@ -9,11 +9,12 @@ from ..types import CCT
 
 
 class BaseHandler(ConversationHandler[CCT]):
+    __slots__ = 'columns'
     columns: dict[str, str]
 
     def __new__(cls) -> 'BaseHandler':
-        inst = ConversationHandler.__new__(cls)
-        inst.__dict__['columns'] = get_columns_meta()
+        inst = super().__new__(cls)
+        inst.columns = get_columns_meta()
 
         return cast('BaseHandler', inst)
 

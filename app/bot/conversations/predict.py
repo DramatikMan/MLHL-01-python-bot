@@ -124,7 +124,7 @@ class PredictHandler(BaseHandler):
         except Exception as ex:
             logging.error(f'Prediction attempt error: {ex}')
             update.message.reply_text(
-                'Could not calculate prediction based on the receiveddata. '
+                'Could not calculate prediction based on the received data. '
                 'Try another file or type /cancel to exit.',
                 reply_markup=ForceReply()
             )
